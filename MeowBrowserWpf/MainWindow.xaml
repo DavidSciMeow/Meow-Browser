@@ -1,0 +1,44 @@
+﻿<Window x:Class="MeowBrowser.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MeowBrowser"
+        mc:Ignorable="d"
+        Title="Meow's Browser" 
+        Height="768" 
+        Width="1366">
+    <Window.Resources>
+        <DataTemplate x:Key="TabHeaderTemplate">
+            <DockPanel LastChildFill="False" MinWidth="80">
+                <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="5,0,20,0" DockPanel.Dock="Left"/>
+                <TextBlock Text="×"
+                   Foreground="Gray"
+                   FontWeight="Bold"
+                   FontSize="16"
+                   Cursor="Hand"
+                   VerticalAlignment="Center"
+                   DockPanel.Dock="Right"
+                   Margin="0,0,5,0">
+                    <TextBlock.InputBindings>
+                        <MouseBinding Gesture="LeftClick"
+                    Command="{Binding DataContext.CloseTabCommand, RelativeSource={RelativeSource AncestorType=TabControl}}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                    </TextBlock.InputBindings>
+                </TextBlock>
+            </DockPanel>
+        </DataTemplate>
+        <Style TargetType="TabItem">
+            <Setter Property="HeaderTemplate" Value="{StaticResource TabHeaderTemplate}"/>
+        </Style>
+    </Window.Resources>
+    <DockPanel>
+        <!-- 导航栏 -->
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="5">
+            <Button Name="NewTabButton" Content="＋" Width="40" Margin="0,0,5,0"/>
+            <Button Name="PluginManagerButton" Content="插件管理" Width="80" Margin="0,0,5,0"/>
+        </StackPanel>
+        <!-- Tab 页 -->
+        <TabControl Name="BrowserTabControl"/>
+    </DockPanel>
+</Window>
