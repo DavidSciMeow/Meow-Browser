@@ -50,7 +50,6 @@ namespace MeowBrowser
 
         public bool ElementExists(string cssSelector)
         {
-            // WebView2的ExecuteScriptAsync是异步的，这里返回值需要异步处理
             var script = $"document.querySelector('{cssSelector}') !== null";
             var task = WebViewControl.ExecuteScriptAsync(script);
             task.Wait();
@@ -66,10 +65,8 @@ namespace MeowBrowser
 
             WebView.CoreWebView2InitializationCompleted += (s, e) =>
             {
-                // Register event handlers first
                 WebView.CoreWebView2.WebResourceRequested += (ws, we) =>
                 {
-                    Debug.WriteLine($"Request: {we.Request.Uri} | Method: {we.Request.Method}");
                     var entry = new NetworkEntry
                     {
                         Method = we.Request.Method,
@@ -113,12 +110,6 @@ namespace MeowBrowser
 
                 // Now start navigation
                 WebView.Source = new Uri(url);
-            };
-
-            NetworkStackButton.Click += (s, e) =>
-            {
-                var win = new NetworkStackWindow(NetworkStack);
-                win.Show();
             };
 
             WebView.EnsureCoreWebView2Async();

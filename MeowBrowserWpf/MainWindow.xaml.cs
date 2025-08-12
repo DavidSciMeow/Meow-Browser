@@ -8,13 +8,15 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Linq;
+using MahApps.Metro.Controls;
 
 namespace MeowBrowser
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, IAppContext
+    public partial class MainWindow : MetroWindow, IAppContext
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ObservableCollection<PluginStatus> _pluginStatuses = [];
@@ -23,7 +25,7 @@ namespace MeowBrowser
         {
             InitializeComponent();
 
-            Closed += (s, e) =>
+            this.Closed += (s, e) =>
             {
                 foreach (Window win in Application.Current.Windows)
                 {
@@ -75,16 +77,31 @@ namespace MeowBrowser
 
             InvokePlugins(plugin => plugin.OnAppLoaded(this));
 
-            // 打开插件管理窗体
+            // 打开插件管理窗体（已移除按钮，改为菜单项事件）
             var pluginManager = new PluginManagerWindow(_pluginStatuses);
 
-            PluginManagerButton.Click += (s, e) =>
+            // 菜单项事件绑定
+            var pluginManagerMenuItem = this.FindName("PluginManagerMenuItem") as MenuItem;
+            if (pluginManagerMenuItem != null)
             {
-                var pluginManager = new PluginManagerWindow(_pluginStatuses);
-                pluginManager.Show();
-            };
+                pluginManagerMenuItem.Click += (s, e) =>
+                {
+                    var pluginManager = new PluginManagerWindow(_pluginStatuses);
+                    pluginManager.Show();
+                };
+            }
+            // 新增主题设置菜单项事件绑定
+            var themeSettingsMenuItem = this.FindName("ThemeSettingsMenuItem") as MenuItem;
+            if (themeSettingsMenuItem != null)
+            {
+                themeSettingsMenuItem.Click += (s, e) =>
+                {
+                    var themeWindow = new ThemeSettingsWindow();
+                    themeWindow.Owner = this;
+                    themeWindow.ShowDialog();
+                };
+            }
 
-            NewTabButton.Click += (s,e) => AddNewTab("https://www.bing.com");
             AddNewTab("https://www.bing.com");
 
             CloseTabCommand = new RelayCommand<TabItem>(tab =>
@@ -134,10 +151,11 @@ namespace MeowBrowser
             // 处理新建Tab请求
             tabPage.RequestNewTab += AddNewTab;
 
-            BrowserTabControl.Items.Add(tabItem);
+            // 在“＋”Tab前插入新Tab
+            int plusIndex = BrowserTabControl.Items.Count - 1;
+            BrowserTabControl.Items.Insert(plusIndex, tabItem);
             BrowserTabControl.SelectedItem = tabItem;
 
-            // 可在此处绑定插件事件、网络堆栈等
             tabPage.WebViewControl.CoreWebView2InitializationCompleted += (s, e) =>
             {
                 tabPage.WebViewControl.CoreWebView2.WebResourceRequested += (ws, we) =>
@@ -150,10 +168,20 @@ namespace MeowBrowser
                         ContentType = we.Response?.Headers.GetHeader("Content-Type") ?? ""
                     };
                     InvokePlugins(plugin => plugin.OnNetworkRequest(entry));
-                    // 可扩展：将 entry 加入每个 tabPage 的网络堆栈
                 };
             };
         }
+
+        // 监听TabControl的SelectionChanged事件
+        private void BrowserTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // 如果选中的是“＋”Tab，则新建Tab
+            if (BrowserTabControl.SelectedItem is TabItem tab && tab.Header?.ToString() == "＋")
+            {
+                AddNewTab("https://www.bing.com");
+            }
+        }
+
         public void CloseActiveTab()
         {
             if (BrowserTabControl.SelectedItem is TabItem selectedTab && selectedTab.Content is BrowserTabPage page)
